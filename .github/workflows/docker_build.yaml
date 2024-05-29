@@ -3,7 +3,7 @@ name: dad-jokes-build
 on:
   push:
     branches:
-      - '*'
+      - 'master'
 
 jobs:
   docker:
