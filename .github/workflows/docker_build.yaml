@@ -26,13 +26,13 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
       -
         name: Build and push
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: .
           file: ./Dockerfile
           platforms: linux/amd64,linux/arm64
           push: true
-          tags: rushyrush/dad-jokes:latest
+          tags: rushyrush/dad-jokes:latest,rushyrush/dad-jokes:v1.0.0
       -
         name: Image digest
         run: echo ${{ steps.docker_build.outputs.digest }}

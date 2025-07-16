@@ -1,10 +1,9 @@
 const text=document.getElementById("quote");
-const author=document.getElementById("author");
 
 const getNewQuote = async () =>
 {
     //quote db
-    var url="./db.json";    
+    var url="./db.json";
 
     // fetch the data from api
     const response=await fetch(url);
@@ -17,18 +16,9 @@ const getNewQuote = async () =>
 
     //Store the quote present at the randomly generated index
     const quote=allQuotes[indx].text;
-    
-    //Store the author of the respective quote
-    const auth=allQuotes[indx].author;
 
-    if(auth==null)
-    {
-        author = "Anonymous";
-    }
- 
-    //function to dynamically display the quote and the author
+    //function to dynamically display the quote
     text.innerHTML=quote;
-    author.innerHTML="~ "+auth;
 }
 
 getNewQuote();
