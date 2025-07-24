@@ -1,3 +1,5 @@
+
+
 name: dad-jokes-build
 
 on:
@@ -12,6 +14,8 @@ jobs:
       -
         name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Fetch all history for tag versioning
       -
         name: Set up QEMU
         uses: docker/setup-qemu-action@v3
@@ -25,6 +29,52 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
       -
+        name: Generate Semantic Version Tag
+        id: tag_version
+        run: |
+          # Get the latest tag
+          LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
+
+          # Extract version components
+          MAJOR=${LATEST_TAG#v}
+          MAJOR=${MAJOR%%.*}
+          MINOR=${LATEST_TAG#*.}
+          MINOR=${MINOR%%.*}
+          PATCH=${LATEST_TAG##*.}
+
+          # Count commits since last tag
+          COMMITS_SINCE_TAG=$(git rev-list ${LATEST_TAG}..HEAD --count)
+
+          # Check for commit types to determine version bump
+          MAJOR_BUMP=$(git log ${LATEST_TAG}..HEAD --pretty=format:%s | grep -i "BREAKING CHANGE" | wc -l)
+          MINOR_BUMP=$(git log ${LATEST_TAG}..HEAD --pretty=format:%s | grep -E "feat|FEAT" | wc -l)
+
+          # Determine new version
+          if [ $MAJOR_BUMP -gt 0 ]; then
+            NEW_MAJOR=$((MAJOR + 1))
+            NEW_MINOR=0
+            NEW_PATCH=0
+          elif [ $MINOR_BUMP -gt 0 ]; then
+            NEW_MAJOR=$MAJOR
+            NEW_MINOR=$((MINOR + 1))
+            NEW_PATCH=0
+          else
+            NEW_MAJOR=$MAJOR
+            NEW_MINOR=$MINOR
+            NEW_PATCH=$((PATCH + COMMITS_SINCE_TAG))
+          fi
+
+          # Create new tag
+          NEW_TAG=v${NEW_MAJOR}.${NEW_MINOR}.${NEW_PATCH}
+          echo "New version: $NEW_TAG"
+          echo "::set-output name=version::$NEW_TAG"
+
+          # Push the new tag (only works if we have push access)
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          git tag -a $NEW_TAG -m "Release version $NEW_TAG"
+          git push origin $NEW_TAG || echo "Tag push failed, likely due to permissions"
+      -
         name: Build and push
         uses: docker/build-push-action@v6
         with:
@@ -32,7 +82,8 @@ jobs:
           file: ./Dockerfile
           platforms: linux/amd64,linux/arm64
           push: true
-          tags: rushyrush/dad-jokes:latest,rushyrush/dad-jokes:v1.0.0
+          tags: rushyrush/dad-jokes:latest,rushyrush/dad-jokes:${{ steps.tag_version.outputs.version }}
       -
         name: Image digest
         run: echo ${{ steps.docker_build.outputs.digest }}
+
