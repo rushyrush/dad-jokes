@@ -32,7 +32,7 @@ jobs:
         name: Generate Semantic Version Tag
         id: tag_version
         run: |
-          # Get the latest tag
+          # Get the latest tag or default to v0.0.0 if no tags exist
           LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
 
           # Extract version components
@@ -42,12 +42,21 @@ jobs:
           MINOR=${MINOR%%.*}
           PATCH=${LATEST_TAG##*.}
 
-          # Count commits since last tag
-          COMMITS_SINCE_TAG=$(git rev-list ${LATEST_TAG}..HEAD --count)
+          # Count commits since last tag (handle case where no tags exist)
+          if [ "$LATEST_TAG" == "v0.0.0" ]; then
+            COMMITS_SINCE_TAG=$(git rev-list --all --count)
+          else
+            COMMITS_SINCE_TAG=$(git rev-list ${LATEST_TAG}..HEAD --count)
+          fi
 
           # Check for commit types to determine version bump
-          MAJOR_BUMP=$(git log ${LATEST_TAG}..HEAD --pretty=format:%s | grep -i "BREAKING CHANGE" | wc -l)
-          MINOR_BUMP=$(git log ${LATEST_TAG}..HEAD --pretty=format:%s | grep -E "feat|FEAT" | wc -l)
+          if [ "$LATEST_TAG" == "v0.0.0" ]; then
+            MAJOR_BUMP=0
+            MINOR_BUMP=0
+          else
+            MAJOR_BUMP=$(git log ${LATEST_TAG}..HEAD --pretty=format:%s | grep -i "BREAKING CHANGE" | wc -l)
+            MINOR_BUMP=$(git log ${LATEST_TAG}..HEAD --pretty=format:%s | grep -E "feat|FEAT" | wc -l)
+          fi
 
           # Determine new version
           if [ $MAJOR_BUMP -gt 0 ]; then
