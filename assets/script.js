@@ -1,5 +1,7 @@
 /* ─── App State ─── */
 let quotes = [];
+let shuffled = [];
+let currentIdx = 0;
 let frontCard = 'A';
 
 /* ─── DOM Refs ─── */
@@ -10,22 +12,43 @@ const quoteB  = document.getElementById('quoteB');
 const toast   = document.getElementById('toast');
 let toastTimer = null;
 
+/* ─── Fisher-Yates Shuffle (fresh random order each call) ─── */
+const shuffleDeck = (arr) => {
+    const copy = [...arr];
+    for (let i = copy.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [copy[i], copy[j]] = [copy[j], copy[i]];
+    }
+    return copy;
+};
+
+/* ─── Get next joke (no repeats until deck is exhausted) ─── */
+const getNextQuote = () => {
+    if (currentIdx >= shuffled.length) {
+        // Ran through the whole deck — reshuffle and start over
+        shuffled = shuffleDeck(quotes);
+        currentIdx = 0;
+    }
+    return shuffled[currentIdx++].text;
+};
+
 /* ─── Load Quotes ─── */
 const loadQuotes = async () => {
     const resp = await fetch('./db.json');
     const data = await resp.json();
     quotes = data;
 
-    quoteA.textContent = getRandomQuote();
-    quoteB.textContent = getRandomQuote();
+    // Fresh random shuffle every page load
+    shuffled = shuffleDeck(quotes);
+    currentIdx = 0;
+
+    quoteA.textContent = getNextQuote();
+    quoteB.textContent = getNextQuote();
 
     cardA.classList.add('front');
     cardB.classList.add('back');
     setBackRotation(cardB);
 };
-
-const getRandomQuote = () =>
-    quotes[Math.floor(Math.random() * quotes.length)].text;
 
 /* ─── Random back tilt ─── */
 const setBackRotation = (el) => {
@@ -40,7 +63,7 @@ const flipCard = () => {
     const backEl   = isFrontA ? cardB  : cardA;
     const backQuote = isFrontA ? quoteB : quoteA;
 
-    backQuote.textContent = getRandomQuote();
+    backQuote.textContent = getNextQuote();
 
     frontEl.classList.remove('front');
     frontEl.classList.add('back');
