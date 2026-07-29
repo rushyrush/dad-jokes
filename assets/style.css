@@ -1,64 +1,265 @@
-*{
-    margin:0;
-    padding:0;
+/* ───────── Reset ───────── */
+* {
+    margin: 0;
+    padding: 0;
     box-sizing: border-box;
 }
-body{
-    min-height:100vh;
-    transition: 0.5s;
-    transition-timing-function: ease-in;
-    background-image: linear-gradient(to right bottom, #040b11, #040b11);
+
+/* ───────── Animated Gradient Background ───────── */
+body {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Inter', sans-serif;
+    background: linear-gradient(135deg, #0b1120 0%, #141b2d 30%, #0f172a 60%, #1a2338 100%);
+    background-size: 300% 300%;
+    animation: gradientShift 20s ease infinite;
+    position: relative;
+    overflow: hidden;
+}
+
+@keyframes gradientShift {
+    0%   { background-position: 0% 50%; }
+    33%  { background-position: 50% 30%; }
+    66%  { background-position: 80% 70%; }
+    100% { background-position: 0% 50%; }
+}
+
+/* ─── Roaming Orbs ─── */
+.orb {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(100px);
+    z-index: 0;
+    will-change: transform, left, top;
+    pointer-events: none;
+}
+
+.orb-1 {
+    width: 840px;
+    height: 840px;
+    background: radial-gradient(circle, rgba(74, 111, 165, 0.30), transparent 70%);
+}
+
+.orb-2 {
+    width: 720px;
+    height: 720px;
+    background: radial-gradient(circle, rgba(109, 40, 217, 0.22), transparent 70%);
+}
+
+.orb-3 {
+    width: 600px;
+    height: 600px;
+    background: radial-gradient(circle, rgba(52, 160, 120, 0.22), transparent 70%);
+}
+
+/* ───────── Card Deck ───────── */
+.card-deck {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    grid-template-areas: "stack";
+    width: 760px;
+    max-width: 92vw;
+}
+
+/* ───────── Individual Cards ───────── */
+.card {
+    grid-area: stack;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 48px 52px 40px;
+    border-radius: 24px;
+    backdrop-filter: blur(24px) saturate(1.4);
+    -webkit-backdrop-filter: blur(24px) saturate(1.4);
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.10);
+    transition: transform 0.55s cubic-bezier(0.34, 1.56, 0.64, 1),
+                box-shadow 0.55s ease,
+                opacity 0.4s ease;
+    transform-origin: center bottom;
+}
+
+/* ─── Front (active) card ─── */
+.card.front {
+    transform: scale(1) translateY(0) rotate(0deg);
+    box-shadow:
+        0 12px 40px rgba(0, 0, 0, 0.5),
+        inset 0 1px 0 rgba(255, 255, 255, 0.10);
+    z-index: 2;
+    pointer-events: auto;
+    opacity: 1;
+}
+
+.card.front:hover {
+    box-shadow:
+        0 20px 56px rgba(0, 0, 0, 0.6),
+        inset 0 1px 0 rgba(255, 255, 255, 0.12);
+    transform: scale(1) translateY(-3px) rotate(0deg);
+}
+
+/* ─── Back (hidden/deck) card ─── */
+.card.back {
+    /* rotation driven by JS via --back-rotate custom property */
+    transform: scale(0.88) translateY(24px) rotate(var(--back-rotate, -1.2deg));
+    box-shadow:
+        0 4px 12px rgba(0, 0, 0, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    z-index: 1;
+    pointer-events: none;
+    opacity: 0.55;
+}
+
+/* ───────── Quote ───────── */
+.quote-wrapper {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    width: 100%;
+}
+
+.quote-icon {
+    font-size: 26px;
+    color: rgba(255, 255, 255, 0.25);
+    flex-shrink: 0;
+    margin-top: 6px;
+}
+
+.quote-icon.fa-quote-right {
+    align-self: flex-end;
+    margin-top: 0;
+    margin-bottom: 6px;
+}
+
+.quote {
+    flex: 1;
+    text-align: center;
+    font-family: 'Inter', sans-serif;
+    font-weight: 700;
+    font-size: 26px;
+    line-height: 1.55;
+    color: rgba(255, 255, 255, 0.93);
+    word-break: break-word;
+    min-height: 2.8em;
     display: flex;
     align-items: center;
     justify-content: center;
 }
-.container
-{
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 30px;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.6);
-    border-radius: 15px;
-    width: 1000px;
-    background-color: rgba(255, 255, 255, 0.3);
-    margin: 10px;
-}
-.fa-quote-left, .fa-quote-right {
-    font-size: 35px;
-    color: #0e1216;
-}
-.quote
-{
-    text-align: center;
-    font-size: 40px;
-    font-weight: bold;
-}
+
+/* ───────── Divider ───────── */
 hr {
-    margin: 10px 0;
+    margin: 28px 0 20px;
     width: 100%;
-    border: 1px solid black;
-    background-color: black;
+    border: none;
+    height: 1px;
+    background: linear-gradient(
+        to right,
+        transparent,
+        rgba(255, 255, 255, 0.12),
+        transparent
+    );
 }
+
+/* ───────── Buttons ───────── */
 .buttons {
     width: 100%;
     display: flex;
-    justify-content: space-between;
+    justify-content: center;
+    gap: 16px;
     align-items: center;
-    margin-top: 9px;
+    margin-top: 4px;
 }
-.next
-{
-    font-size:18px;
-    border-radius: 5px;
-    cursor:pointer;
-    padding: 10px;
-    margin-top: 5px;
-    font-weight: bold;
-    color: white;
-    background-image: linear-gradient(to right bottom, #2e455a, #485662);
+
+.next,
+.copy {
+    font-family: 'Inter', sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    padding: 12px 28px;
+    color: #fff;
+    transition: all 0.25s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    letter-spacing: 0.01em;
 }
-.container:hover
-{
-    box-shadow: 0 10px 10px #485662;
+
+.next {
+    background: linear-gradient(135deg, #2e455a, #485662);
+    box-shadow: 0 4px 14px rgba(46, 69, 90, 0.35);
+}
+.next:hover {
+    background: linear-gradient(135deg, #3a5872, #5a6e7a);
+    box-shadow: 0 6px 20px rgba(46, 69, 90, 0.50);
+    transform: translateY(-1px);
+}
+.next:active {
+    transform: translateY(0);
+}
+
+.copy {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+}
+.copy:hover {
+    background: rgba(255, 255, 255, 0.14);
+    border-color: rgba(255, 255, 255, 0.20);
+    transform: translateY(-1px);
+}
+.copy:active {
+    transform: translateY(0);
+}
+
+/* ───────── Toast ───────── */
+.toast {
+    position: fixed;
+    bottom: 32px;
+    left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: rgba(255, 255, 255, 0.10);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.10);
+    color: rgba(255, 255, 255, 0.85);
+    padding: 10px 24px;
+    border-radius: 10px;
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.35s ease;
+    z-index: 100;
+}
+
+.toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+
+/* ───────── Responsive ───────── */
+@media (max-width: 600px) {
+    .card {
+        padding: 32px 24px 28px;
+    }
+    .quote {
+        font-size: 20px;
+        min-height: 2.5em;
+    }
+    .quote-icon {
+        font-size: 20px;
+    }
+    .buttons {
+        flex-direction: column;
+        gap: 10px;
+    }
+    .next,
+    .copy {
+        width: 100%;
+        justify-content: center;
+    }
 }
