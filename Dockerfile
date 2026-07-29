@@ -2,8 +2,9 @@ FROM alpine:3.21 AS builder
 
 COPY ./assets/ /src/
 
-# Generate a content hash from all assets and inject it into asset URLs
+# Fix perms (build context preserves host permissions), compute cache-bust hash, inject into HTML
 RUN apk add --no-cache coreutils && \
+    chmod -R a+rX /src && \
     SHA=$(find /src -type f -exec sha256sum {} + | sort | sha256sum | cut -c1-8) && \
     sed -i "s|style.css|style.css?v=$SHA|g; s|script.js|script.js?v=$SHA|g" /src/index.html
 
