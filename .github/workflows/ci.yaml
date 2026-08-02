@@ -1,0 +1,69 @@
+name: ci
+
+# Runs on every PR (to any target branch) and on pushes to master.
+# This is the lightweight validation gate for the repo's primary content:
+# the joke corpus in assets/db.json. It must pass before a PR merges.
+
+on:
+  pull_request:
+  push:
+    branches:
+      - 'master'
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Validate joke corpus (db.json)
+        run: |
+          python3 - <<'EOF'
+          import json, sys
+
+          path = 'assets/db.json'
+          with open(path, 'r', encoding='utf-8') as f:
+              data = json.load(f)
+
+          errors = []
+
+          # Must be a plain array (script.js consumes it directly as `data`)
+          if not isinstance(data, list):
+              errors.append(
+                  f"'{path}' must be a JSON array of {{'text': '...'}} objects; "
+                  f"found {type(data).__name__}."
+              )
+              sys.exit("\n".join(errors) if errors else 0)
+
+          # Every entry must be an object with a non-empty string 'text'
+          for i, entry in enumerate(data):
+              if not isinstance(entry, dict):
+                  errors.append(f"entry [{i}] is {type(entry).__name__}, expected an object")
+                  continue
+              text = entry.get('text')
+              if not isinstance(text, str) or not text.strip():
+                  errors.append(f"entry [{i}] is missing a non-empty string 'text' field")
+
+          # No duplicate jokes (case-insensitive)
+          seen = set()
+          for i, entry in enumerate(data):
+              if isinstance(entry, dict) and isinstance(entry.get('text'), str):
+                  key = entry['text'].strip().casefold()
+                  if key in seen:
+                      errors.append(f"duplicate joke at index [{i}]: \"{entry['text'][:60]}\"")
+                  seen.add(key)
+
+          if errors:
+              print(f"FAILED: {len(errors)} problem(s) in '{path}'")
+              for e in errors:
+                  print(f"  - {e}")
+              sys.exit(1)
+
+          print(f"OK: '{path}' is valid (array of {len(data)} jokes, no duplicates)")
+          EOF
